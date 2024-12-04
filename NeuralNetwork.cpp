@@ -157,7 +157,6 @@ bool NeuralNetwork::contribute(double y, double p) {
     return true;
 }
 
-
 // STUDENT TODO: IMPLEMENT
 double NeuralNetwork::contribute(int nodeId, const double& y, const double& p) {
     double incomingContribution = 0;
