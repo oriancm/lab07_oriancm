@@ -107,46 +107,11 @@ vector<double> NeuralNetwork::predict(DataInstance instance) {
 
 // STUDENT TODO: IMPLEMENT
 bool NeuralNetwork::contribute(double y, double p) {
-    double incomingContribution = 0;
-    double outgoingContribution = 0;
 
-    for (int id : outputNodeIds) {
-        outgoingContribution = contribute(id, y, p);
-        contributions[id] = outgoingContribution;
-    }
+    NodeInfo* tempNode = nullptr;
 
-    stack <int> s;
-    unordered_set <int> visited;
-
-    for (int id : outputNodeIds) {
-        s.push(id);
-    }
-
-    while (!s.empty()) {
-        int currentId = s.top();
-        s.pop();
-
-        if (visited.find(currentId) != visited.end()) {
-            continue;
-        }
-
-        visited.insert(currentId);
-
-        NodeInfo* currNode = getNode(currentId);
-        outgoingContribution = contributions[currentId];
-
-        incomingContribution = contribute(currentId, y, p);
-
-        for (const auto& pair : adjacencyList[currentId]) {
-            int neighborId = pair.first;
-            
-            if (contributions.find(neighborId) == contributions.end()) {
-                contributions[neighborId] = 0;
-            }
-            contributions[neighborId] += incomingContribution;
-
-            s.push(neighborId);
-        }
+    for (size_t i = 0; i < inputNodeIds.size(); ++i) {
+        contribute(inputNodeIds[i], y, p);
     }
 
     flush();
@@ -155,30 +120,31 @@ bool NeuralNetwork::contribute(double y, double p) {
 
 // STUDENT TODO: IMPLEMENT
 double NeuralNetwork::contribute(int nodeId, const double& y, const double& p) {
-    double incomingContribution = 0;
-    double outgoingContribution = 0;
-    NodeInfo* currNode = getNode(nodeId);
 
-    if (adjacencyList[nodeId].empty()) {
-        outgoingContribution = -1 * ((y - p) / (p * (1 - p)));
+    double incomingEffect = 0.0;
+    double outgoingEffect = 0.0;
+    NodeInfo* currentNode = nodes[nodeId];
+
+    if (adjacencyList.at(nodeId).empty()) {
+        outgoingEffect = -(y - p) / (p * (1 - p));
     } else {
-        outgoingContribution = contributions[nodeId];
+        for (const auto& neighbor : adjacencyList.at(nodeId)) {
+            if (contributions.find(neighbor.first) == contributions.end()) {
+                incomingEffect = contribute(neighbor.first, y, p);
+            } else {
+                incomingEffect = contributions[neighbor.first];
+            }
+            visitContributeNeighbor(const_cast<Connection&>(neighbor.second), incomingEffect, outgoingEffect);
+        }
     }
 
-    for (const auto& pair : adjacencyList[nodeId]) {
-        int neighborId = pair.first;
-        Connection& connection = adjacencyList[nodeId][neighborId];
-        
-        double weightUpdate = outgoingContribution * currNode->postActivationValue * (1 - currNode->postActivationValue) * getNode(neighborId)->postActivationValue;
-        
-        connection.weight -= weightUpdate * learningRate;
-        
-        incomingContribution += weightUpdate;
+    if (nodeId >= static_cast<int>(inputNodeIds.size())) {
+        visitContributeNode(nodeId, outgoingEffect);
     }
 
-    visitContributeNode(nodeId, outgoingContribution);
+    contributions[nodeId] = outgoingEffect;
 
-    return adjacencyList[nodeId].empty() ? outgoingContribution : incomingContribution;
+    return outgoingEffect;
 }
 
 bool NeuralNetwork::update() {
@@ -204,8 +170,6 @@ bool NeuralNetwork::update() {
     return true;
     
 }
-
-
 
 
 // Feel free to explore the remaining code, but no need to implement past this point
