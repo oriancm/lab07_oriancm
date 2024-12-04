@@ -115,8 +115,8 @@ bool NeuralNetwork::contribute(double y, double p) {
         contributions[id] = outgoingContribution;
     }
 
-    stack<int> s;
-    unordered_set<int> visited;
+    stack <int> s;
+    unordered_set <int> visited;
 
     for (int id : outputNodeIds) {
         s.push(id);
@@ -135,19 +135,15 @@ bool NeuralNetwork::contribute(double y, double p) {
         NodeInfo* currNode = getNode(currentId);
         outgoingContribution = contributions[currentId];
 
-        visitContributeNode(currentId, outgoingContribution);
+        incomingContribution = contribute(currentId, y, p);
 
         for (const auto& pair : adjacencyList[currentId]) {
             int neighborId = pair.first;
-            Connection& connection = adjacencyList[currentId][neighborId];
-
-            incomingContribution = outgoingContribution;
-            visitContributeNeighbor(connection, incomingContribution, outgoingContribution);
-
+            
             if (contributions.find(neighborId) == contributions.end()) {
                 contributions[neighborId] = 0;
             }
-            contributions[neighborId] += outgoingContribution;
+            contributions[neighborId] += incomingContribution;
 
             s.push(neighborId);
         }
@@ -169,9 +165,20 @@ double NeuralNetwork::contribute(int nodeId, const double& y, const double& p) {
         outgoingContribution = contributions[nodeId];
     }
 
+    for (const auto& pair : adjacencyList[nodeId]) {
+        int neighborId = pair.first;
+        Connection& connection = adjacencyList[nodeId][neighborId];
+        
+        double weightUpdate = outgoingContribution * currNode->postActivationValue * (1 - currNode->postActivationValue) * getNode(neighborId)->postActivationValue;
+        
+        connection.weight -= weightUpdate * learningRate;
+        
+        incomingContribution += weightUpdate;
+    }
+
     visitContributeNode(nodeId, outgoingContribution);
 
-    return outgoingContribution;
+    return adjacencyList[nodeId].empty() ? outgoingContribution : incomingContribution;
 }
 
 bool NeuralNetwork::update() {
