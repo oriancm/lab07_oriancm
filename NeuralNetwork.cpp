@@ -18,22 +18,22 @@ void NeuralNetwork::setLearningRate(double lr) {
 
 // STUDENT TODO: IMPLEMENT
 void NeuralNetwork::setInputNodeIds(std::vector<int> inputNodeIds) {
-    //stub
+    this->inputNodeIds = inputNodeIds;
 }
 
 // STUDENT TODO: IMPLEMENT
 void NeuralNetwork::setOutputNodeIds(std::vector<int> outputNodeIds) {
-    //stub
+    this->outputNodeIds = outputNodeIds;
 }
 
 // STUDENT TODO: IMPLEMENT
-vector<int> NeuralNetwork::getInputNodeIds() const {
-    return vector<int>(); //stub
+std::vector<int> NeuralNetwork::getInputNodeIds() const {
+    return inputNodeIds;
 }
 
 // STUDENT TODO: IMPLEMENT
-vector<int> NeuralNetwork::getOutputNodeIds() const {
-    return vector<int>(); //stub
+std::vector<int> NeuralNetwork::getOutputNodeIds() const {
+    return outputNodeIds;
 }
 
 // STUDENT TODO: IMPLEMENT
